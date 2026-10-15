@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L'Appréciation Littéraire : La méthode RÉA</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- ⚠️ RÈGLE BABEL OBLIGATOIRE -->
+    <script>
+      Babel.registerPreset('react-classic', {
+        presets: [
+          [Babel.availablePresets['react'], { runtime: 'classic' }]
+        ]
+      });
+    </script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom scrollbar for better TNI experience */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-800 selection:bg-blue-200">
+    <div id="root" class="min-h-screen flex flex-col"></div>
+
+    <script type="text/babel" data-type="module" data-presets="react-classic">
+        const { useState, useEffect } = React;
+
+        const IconBook = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>;
+        const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>;
+        const IconX = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
+        const IconThumbsUp = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>;
+        const IconThumbsDown = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" /></svg>;
+        const IconSearch = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
+        const IconIdea = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>;
+
+        const Tab1Discovery = () => (
+            <div className="fade-in space-y-6 flex flex-col h-full">
+                <div className="bg-white rounded-2xl shadow-lg p-8 border-t-8 border-blue-500">
+                    <h2 className="text-3xl font-bold text-blue-800 mb-6 flex items-center gap-3">
+                        <IconIdea /> Qu'est-ce qu'apprécier une œuvre ?
+                    </h2>
+                    <p className="text-2xl leading-relaxed mb-6">
+                        Apprécier un texte, ce n'est pas juste dire <span className="font-bold text-red-500">« j'aime »</span> ou <span className="font-bold text-red-500">« je n'aime pas »</span>.
+                        C'est porter un jugement guidé par des critères précis (ce qui rend le texte fort ou faible).
+                    </p>
+                    
+                    <div className="grid md:grid-cols-2 gap-8 mt-8">
+                        <div className="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+                            <h3 className="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">
+                                <IconX /> Réponse incomplète
+                            </h3>
+                            <p className="text-xl italic bg-white p-4 rounded shadow-sm">
+                                « J'ai aimé le livre parce qu'il était bon. »
+                            </p>
+                            <p className="mt-4 text-lg text-red-800 font-medium">
+                                ➔ Ce n'est pas une appréciation complète. Il n'y a pas de force ciblée ni d'exemple.
+                            </p>
+                        </div>
+                        
+                        <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                            <h3 className="text-xl font-bold text-green-700 mb-4 flex items-center gap-2">
+                                <IconCheck /> Appréciation réussie !
+                            </h3>
+                            <p className="text-xl italic bg-white p-4 rounded shadow-sm">
+                                « J'ai aimé ce livre parce que <span className="font-bold text-green-700">les personnages sont très drôles</span>, <span className="underline decoration-green-400 decoration-4">comme lorsque le chat met le feu au gâteau de fête.</span> »
+                            </p>
+                            <p className="mt-4 text-lg text-green-800 font-medium">
+                                ➔ C'est complet ! On nomme une force et on donne un exemple précis du texte.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const Tab2Forces = () => (
+            <div className="fade-in space-y-6 flex flex-col h-full">
+                <div className="bg-white rounded-2xl shadow-lg p-8 border-t-8 border-purple-500">
+                    <h2 className="text-3xl font-bold text-purple-800 mb-4 flex items-center gap-3">
+                        <IconBook /> Exprimer les Forces et les Faiblesses
+                    </h2>
+                    
+                    <div className="bg-purple-100 p-6 rounded-xl mb-8 border-2 border-purple-300">
+                        <h3 className="text-2xl font-bold text-purple-900 mb-2">⭐ RÈGLE D'OR</h3>
+                        <p className="text-2xl">
+                            Pour bien apprécier, je nomme une <strong className="text-green-600">force</strong> ou une <strong className="text-red-600">faiblesse</strong> en utilisant <strong className="bg-yellow-200 px-2 rounded">« parce que... »</strong> et j'ajoute un exemple pertinent et détaillé.
+                        </p>
+                    </div>
+
+                    <h3 className="text-2xl font-bold mb-6 text-gray-700">Sur quoi puis-je poser mon jugement ?</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="text-4xl mb-3">🎭</div>
+                            <h4 className="text-xl font-bold text-blue-700 mb-2">Les personnages</h4>
+                            <p className="text-lg text-gray-600">Sont-ils attachants, réalistes, drôles, ou trop prévisibles ?</p>
+                        </div>
+                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="text-4xl mb-3">📖</div>
+                            <h4 className="text-xl font-bold text-blue-700 mb-2">L'intrigue et le rythme</h4>
+                            <p className="text-lg text-gray-600">L'histoire est-elle captivante, pleine de suspense, ou trop lente ?</p>
+                        </div>
+                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="text-4xl mb-3">🎨</div>
+                            <h4 className="text-xl font-bold text-blue-700 mb-2">Le style et les illustrations</h4>
+                            <p className="text-lg text-gray-600">Le vocabulaire est-il imagé ? Les descriptions sont-elles vivantes ?</p>
+                        </div>
+                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="text-4xl mb-3">🏁</div>
+                            <h4 className="text-xl font-bold text-blue-700 mb-2">La fin de l'histoire</h4>
+                            <p className="text-lg text-gray-600">Est-elle surprenante, logique, ou décevante ?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const Tab3REA = () => (
+            <div className="fade-in space-y-6 flex flex-col h-full">
+                <div className="bg-white rounded-2xl shadow-lg p-8 border-t-8 border-indigo-500">
+                    <h2 className="text-3xl font-bold text-indigo-800 mb-8 text-center">
+                        La Démarche Stratégique : R.É.A.
+                    </h2>
+                    
+                    <div className="space-y-6 max-w-4xl mx-auto">
+                        <div className="flex flex-col md:flex-row items-center bg-blue-50 rounded-2xl p-6 border-l-8 border-blue-500 shadow-sm">
+                            <div className="text-7xl font-black text-blue-600 mr-8 mb-4 md:mb-0">R</div>
+                            <div>
+                                <h3 className="text-3xl font-bold text-blue-900 mb-2">Je Réponds</h3>
+                                <p className="text-xl text-blue-800">Je réponds directement à la question posée (Ex: Oui, je recommanderais ce livre / Je donne 8/10).</p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row items-center bg-green-50 rounded-2xl p-6 border-l-8 border-green-500 shadow-sm">
+                            <div className="text-7xl font-black text-green-600 mr-8 mb-4 md:mb-0">É</div>
+                            <div>
+                                <h3 className="text-3xl font-bold text-green-900 mb-2">J'Évalue / J'Explique</h3>
+                                <p className="text-xl text-green-800">Je nomme la force ou la faiblesse en donnant ma raison avec <strong className="bg-green-200 px-2 rounded">parce que</strong>.</p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row items-center bg-orange-50 rounded-2xl p-6 border-l-8 border-orange-500 shadow-sm">
+                            <div className="text-7xl font-black text-orange-600 mr-8 mb-4 md:mb-0">A</div>
+                            <div>
+                                <h3 className="text-3xl font-bold text-orange-900 mb-2">J'Appuie</h3>
+                                <p className="text-xl text-orange-800">J'appuie mon idée avec une <strong className="bg-orange-200 px-2 rounded">preuve ou un exemple précis</strong> tiré de l'histoire.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const quizData = [
+            { text: "Je donne 8/10 à ce texte parce qu'il y a beaucoup de suspense quand le héros cherche la clé dans le noir.", correct: 'up', exp: "RÉA complet : Note donnée, explication de la force (suspense) et exemple précis (le héros cherche la clé dans le noir)." },
+            { text: "Recommanderais-tu ce livre ? Oui, parce qu'il est vraiment très bon.", correct: 'down', exp: "Incomplet : Il manque la force ciblée (pourquoi est-il bon ?) et un exemple précis du texte." },
+            { text: "Je donnerais un commentaire à l'auteur pour lui dire que la fin est décevante.", correct: 'down', exp: "Incomplet : Il manque l'explication du POURQUOI elle est décevante et un exemple." },
+            { text: "Je ne lirais pas la suite parce que l'histoire est trop prévisible. On savait dès le chapitre 2 que le voisin était le voleur.", correct: 'up', exp: "RÉA complet : Réponse claire, évaluation (trop prévisible), appui précis (voisin voleur au chapitre 2)." },
+            { text: "Cette histoire est intéressante parce que le personnage principal est très courageux.", correct: 'down', exp: "Proche, mais il manque l'exemple (J'Appuie) d'une action du texte qui prouve son courage." },
+            { text: "Je donne 10/10 car les illustrations aident à comprendre l'histoire, notamment lors de la grande bataille de l'espace.", correct: 'up', exp: "RÉA complet : Explication (les illustrations aident) et appui précis (la grande bataille de l'espace)." },
+            { text: "Je recommanderais ce livre à un ami parce que j'aime les histoires de chiens.", correct: 'down', exp: "C'est une réaction personnelle. Il faut nommer une force du texte (ex: les aventures du chien sont palpitantes) avec un exemple." },
+            { text: "Si je rencontrais l'auteur, je lui dirais d'ajouter des dialogues. Les personnages parlent trop peu durant la quête.", correct: 'up', exp: "RÉA complet : Le jugement est porté (manque de dialogues) et expliqué par la situation (durant la quête)." },
+            { text: "Oui, j'aimerais lire la suite parce que je veux savoir ce qui se passe.", correct: 'down', exp: "Incomplet : Pas de précision sur ce qui est captivant dans l'intrigue. Il manque un exemple." },
+            { text: "Cette histoire est captivante parce qu'il y a des rebondissements constants, comme lorsque le bateau coule subitement au chapitre 4.", correct: 'up', exp: "RÉA complet : Évaluation claire (rebondissements) et appui très précis (bateau qui coule au chap. 4)." }
+        ];
+
+        const Tab4Quiz = () => {
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [userChoice, setUserChoice] = useState(null); // 'up' or 'down'
+            const [score, setScore] = useState(0);
+            const [isFinished, setIsFinished] = useState(false);
+
+            // Derived state
+            const q = quizData[currentIndex];
+            const hasAnswered = userChoice !== null;
+            const isCorrect = userChoice === q?.correct;
+
+            const handleChoice = (choice) => {
+                if (hasAnswered) return;
+                setUserChoice(choice);
+                if (choice === q.correct) {
+                    setScore(s => s + 1);
+                }
+            };
+
+            const handleNext = () => {
+                if (currentIndex < quizData.length - 1) {
+                    setCurrentIndex(i => i + 1);
+                    setUserChoice(null);
+                } else {
+                    setIsFinished(true);
+                }
+            };
+
+            const resetQuiz = () => {
+                setCurrentIndex(0);
+                setUserChoice(null);
+                setScore(0);
+                setIsFinished(false);
+            };
+
+            if (isFinished) {
+                return (
+                    <div className="fade-in bg-white rounded-2xl shadow-lg p-10 text-center border-t-8 border-teal-500 h-full flex flex-col justify-center">
+                        <h2 className="text-4xl font-bold text-teal-800 mb-6">Activité terminée !</h2>
+                        <div className="text-9xl mb-6">🏆</div>
+                        <p className="text-3xl mb-8">Ton score : <span className="font-bold text-teal-600">{score} / {quizData.length}</span></p>
+                        <button 
+                            onClick={resetQuiz}
+                            className="mx-auto bg-teal-500 hover:bg-teal-600 text-white font-bold py-4 px-10 rounded-full text-2xl transition-colors"
+                        >
+                            Rejouer
+                        </button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="fade-in bg-white rounded-2xl shadow-lg p-8 border-t-8 border-teal-500 flex flex-col h-full min-h-[600px]">
+                    <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-3xl font-bold text-teal-800">Analyse de réponses</h2>
+                        <span className="bg-teal-100 text-teal-800 text-xl font-bold py-2 px-6 rounded-full">
+                            Question {currentIndex + 1} / {quizData.length}
+                        </span>
+                    </div>
+
+                    <p className="text-xl mb-4 text-gray-600">Lis la réponse d'un élève. Est-ce une appréciation complète selon la démarche RÉA ?</p>
+                    
+                    <div className="bg-gray-50 p-8 rounded-2xl border-2 border-gray-200 text-2xl font-medium text-center shadow-inner flex-1 flex items-center justify-center min-h-[150px] mb-8">
+                        « {q.text} »
+                    </div>
+
+                    <div className="flex justify-center gap-8 mb-8">
+                        <button 
+                            onClick={() => handleChoice('up')}
+                            disabled={hasAnswered}
+                            className={`p-6 rounded-2xl border-4 transition-all flex flex-col items-center gap-3 w-48 ${
+                                hasAnswered 
+                                ? userChoice === 'up' 
+                                    ? (q.correct === 'up' ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500')
+                                    : 'bg-gray-100 border-gray-200 opacity-50'
+                                : 'bg-white border-green-200 hover:bg-green-50 hover:border-green-500 hover:scale-105 shadow-md'
+                            }`}
+                        >
+                            <IconThumbsUp />
+                            <span className="text-xl font-bold">Complet</span>
+                        </button>
+                        
+                        <button 
+                            onClick={() => handleChoice('down')}
+                            disabled={hasAnswered}
+                            className={`p-6 rounded-2xl border-4 transition-all flex flex-col items-center gap-3 w-48 ${
+                                hasAnswered 
+                                ? userChoice === 'down' 
+                                    ? (q.correct === 'down' ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500')
+                                    : 'bg-gray-100 border-gray-200 opacity-50'
+                                : 'bg-white border-red-200 hover:bg-red-50 hover:border-red-500 hover:scale-105 shadow-md'
+                            }`}
+                        >
+                            <IconThumbsDown />
+                            <span className="text-xl font-bold">Incomplet</span>
+                        </button>
+                    </div>
+
+                    {/* Feedback Area - Reserved height so buttons don't jump */}
+                    <div className="min-h-[120px]"> 
+                        {hasAnswered && (
+                            <div className={`fade-in p-6 rounded-xl border-2 flex flex-col sm:flex-row items-center justify-between gap-6 ${isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
+                                <div className="flex-1">
+                                    <div className={`text-2xl font-bold mb-2 flex items-center gap-2 ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                                        {isCorrect ? <IconCheck /> : <IconX />}
+                                        {isCorrect ? 'Bonne analyse !' : 'Oups, pas tout à fait.'}
+                                    </div>
+                                    <p className="text-lg">{q.exp}</p>
+                                </div>
+                                <button 
+                                    onClick={handleNext}
+                                    className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl text-xl shadow-md transition-colors"
+                                >
+                                    {currentIndex < quizData.length - 1 ? 'Suivant ➔' : 'Terminer'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const detectiveCases = [
+            {
+                id: 1,
+                q: "Recommanderais-tu à un ami de lire ce livre ?",
+                r: "Oui, je le recommanderais parce que le monstre est rigolo. Il fait des blagues bizarres tout au long du chapitre 3.",
+                options: [
+                    { key: 'R', label: "Je réponds", detail: "(Oui, je le recommanderais)", expected: true },
+                    { key: 'É', label: "J'explique", detail: "(parce que le monstre est rigolo)", expected: true },
+                    { key: 'A', label: "J'appuie avec un exemple", detail: "(ex: blagues bizarres au chapitre 3)", expected: true }
+                ]
+            },
+            {
+                id: 2,
+                q: "Quelle note sur 10 donnerais-tu à ce texte ? Explique ton choix.",
+                r: "Je donne 5/10 parce que le début est très long et ennuyant.",
+                options: [
+                    { key: 'R', label: "Je réponds", detail: "(Je donne 5/10)", expected: true },
+                    { key: 'É', label: "J'explique", detail: "(parce que le début est long et ennuyant)", expected: true },
+                    { key: 'A', label: "J'appuie avec un exemple précis", detail: "(Il n'y a pas d'exemple de ce qui se passe !)", expected: false }
+                ]
+            },
+            {
+                id: 3,
+                q: "Quels commentaires ferais-tu à l'auteur si tu le rencontrais ?",
+                r: "Je lui dirais que son vocabulaire est fantastique, comme l'utilisation des mots 'ténébreux' et 'étincelant' pour décrire le château.",
+                options: [
+                    { key: 'R', label: "Je réponds", detail: "(Je lui dirais que...)", expected: true },
+                    { key: 'É', label: "J'explique", detail: "(son vocabulaire est fantastique)", expected: true },
+                    { key: 'A', label: "J'appuie avec un exemple", detail: "(ex: mots 'ténébreux' et 'étincelant')", expected: true }
+                ]
+            }
+        ];
+
+        const Tab5Detective = () => {
+            const [caseIndex, setCaseIndex] = useState(0);
+            const [checked, setChecked] = useState({ 0: false, 1: false, 2: false });
+            const [showValidation, setShowValidation] = useState(false);
+            const [isFinished, setIsFinished] = useState(false);
+
+            const currentCase = detectiveCases[caseIndex];
+
+            const toggleCheck = (idx) => {
+                if (showValidation) return; // Prevent changes after validation
+                setChecked(prev => ({ ...prev, [idx]: !prev[idx] }));
+            };
+
+            const handleValidate = () => {
+                setShowValidation(true);
+            };
+
+            const handleNext = () => {
+                if (caseIndex < detectiveCases.length - 1) {
+                    setCaseIndex(i => i + 1);
+                    setChecked({ 0: false, 1: false, 2: false });
+                    setShowValidation(false);
+                } else {
+                    setIsFinished(true);
+                }
+            };
+
+            const resetGame = () => {
+                setCaseIndex(0);
+                setChecked({ 0: false, 1: false, 2: false });
+                setShowValidation(false);
+                setIsFinished(false);
+            };
+
+            const isAllCorrect = () => {
+                return currentCase.options.every((opt, i) => opt.expected === checked[i]);
+            };
+
+            if (isFinished) {
+                return (
+                    <div className="fade-in bg-white rounded-2xl shadow-lg p-10 text-center border-t-8 border-slate-700 h-full flex flex-col justify-center">
+                        <h2 className="text-4xl font-bold text-slate-800 mb-6">Mission accomplie, Détective !</h2>
+                        <div className="text-9xl mb-6">🕵️‍♂️</div>
+                        <p className="text-2xl mb-8">Tu sais maintenant analyser une appréciation à la loupe avec la méthode RÉA.</p>
+                        <button 
+                            onClick={resetGame}
+                            className="mx-auto bg-slate-700 hover:bg-slate-800 text-white font-bold py-4 px-10 rounded-full text-2xl transition-colors"
+                        >
+                            Nouvelle enquête
+                        </button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="fade-in bg-white rounded-2xl shadow-lg p-8 border-t-8 border-slate-700 flex flex-col h-full min-h-[600px]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                            <IconSearch /> Joue au détective
+                        </h2>
+                        <span className="bg-slate-200 text-slate-800 text-xl font-bold py-2 px-6 rounded-full">
+                            Dossier {caseIndex + 1} / 3
+                        </span>
+                    </div>
+
+                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-6 shadow-sm">
+                        <p className="text-xl text-slate-600 mb-2 font-bold uppercase tracking-wider text-sm">Question posée :</p>
+                        <p className="text-2xl font-medium text-slate-800 mb-6">« {currentCase.q} »</p>
+                        
+                        <p className="text-xl text-slate-600 mb-2 font-bold uppercase tracking-wider text-sm">Réponse de l'élève :</p>
+                        <div className="bg-yellow-100 p-4 rounded-lg border border-yellow-300 text-xl italic text-slate-900 border-l-4 border-l-yellow-500">
+                            « {currentCase.r} »
+                        </div>
+                    </div>
+
+                    <p className="text-xl font-bold text-slate-700 mb-4">Coche les éléments RÉA qui sont PRÉSENTS dans la réponse :</p>
+
+                    <div className="space-y-4 mb-8 flex-1">
+                        {currentCase.options.map((opt, idx) => {
+                            const isChecked = checked[idx];
+                            let statusClass = "";
+                            let statusIcon = null;
+
+                            if (showValidation) {
+                                if (isChecked === opt.expected) {
+                                    statusClass = "bg-green-100 border-green-500";
+                                    statusIcon = <IconCheck />;
+                                } else {
+                                    statusClass = "bg-red-100 border-red-500";
+                                    statusIcon = <IconX />;
+                                }
+                            } else {
+                                statusClass = isChecked ? "bg-blue-50 border-blue-400" : "bg-white border-gray-300 hover:bg-gray-50";
+                            }
+
+                            return (
+                                <div 
+                                    key={idx}
+                                    onClick={() => toggleCheck(idx)}
+                                    className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-colors ${statusClass}`}
+                                >
+                                    <div className={`w-8 h-8 rounded border-2 flex items-center justify-center mr-4 ${isChecked ? 'bg-blue-500 border-blue-500' : 'border-gray-400 bg-white'}`}>
+                                        {isChecked && <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="text-2xl font-black text-blue-800 mr-2">{opt.key}</span>
+                                        <span className="text-xl font-bold">{opt.label}</span>
+                                        <span className="text-lg text-gray-600 ml-2">{opt.detail}</span>
+                                    </div>
+                                    {showValidation && (
+                                        <div className="ml-4">
+                                            {statusIcon}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Controls Footer */}
+                    <div className="min-h-[80px] flex justify-center items-center">
+                        {!showValidation ? (
+                            <button 
+                                onClick={handleValidate}
+                                className="bg-slate-700 hover:bg-slate-800 text-white font-bold py-4 px-12 rounded-xl text-2xl shadow-lg transition-transform hover:scale-105"
+                            >
+                                Valider l'analyse
+                            </button>
+                        ) : (
+                            <div className={`w-full p-4 rounded-xl flex items-center justify-between ${isAllCorrect() ? 'bg-green-100' : 'bg-orange-100'}`}>
+                                <span className={`text-xl font-bold ${isAllCorrect() ? 'text-green-800' : 'text-orange-800'}`}>
+                                    {isAllCorrect() ? "Excellent diagnostic détective !" : "Regarde bien les corrections, il manquait ou il y avait un élément en trop."}
+                                </span>
+                                <button 
+                                    onClick={handleNext}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl text-xl shadow-md"
+                                >
+                                    {caseIndex < detectiveCases.length - 1 ? 'Dossier suivant ➔' : 'Terminer'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState(1);
+
+            const tabs = [
+                { id: 1, title: "Découverte", icon: "💡" },
+                { id: 2, title: "Forces & Faiblesses", icon: "⚖️" },
+                { id: 3, title: "La Méthode RÉA", icon: "🎯" },
+                { id: 4, title: "Analyse (👍/👎)", icon: "🎮" },
+                { id: 5, title: "Détective 🕵️‍♀️", icon: "🔍" }
+            ];
+
+            return (
+                <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full p-4 md:p-6 lg:p-8">
+                    {/* Header */}
+                    <header className="mb-8 text-center bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-500">
+                        <h1 className="text-3xl md:text-4xl font-black text-gray-800 mb-2">
+                            L'Appréciation d'une œuvre littéraire
+                        </h1>
+                        <p className="text-xl text-gray-600 font-medium">
+                            Je peux nommer une force ou une faiblesse et l’expliquer à l’aide du texte.
+                        </p>
+                    </header>
+
+                    {/* Navigation Tabs */}
+                    <nav className="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-6 py-4 rounded-xl text-xl font-bold transition-all duration-200 ${
+                                    activeTab === tab.id 
+                                    ? 'bg-blue-600 text-white shadow-lg transform scale-105' 
+                                    : 'bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 shadow border border-gray-200'
+                                }`}
+                            >
+                                <span>{tab.icon}</span>
+                                <span className="hidden sm:inline">{tab.title}</span>
+                            </button>
+                        ))}
+                    </nav>
+
+                    {/* Main Content Area (Fluid container) */}
+                    <main className="flex-1 min-h-[600px] mb-8">
+                        {activeTab === 1 && <Tab1Discovery />}
+                        {activeTab === 2 && <Tab2Forces />}
+                        {activeTab === 3 && <Tab3REA />}
+                        {activeTab === 4 && <Tab4Quiz />}
+                        {activeTab === 5 && <Tab5Detective />}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
